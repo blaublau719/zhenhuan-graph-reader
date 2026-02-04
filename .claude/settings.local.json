@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(ralph-loop:ralph-loop)",
+      "Bash(ls:*)",
+      "Bash(chmod:*)",
+      "Bash(bash:*)",
+      "Bash(grep:*)"
+    ]
+  }
+}
