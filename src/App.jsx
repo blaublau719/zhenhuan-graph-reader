@@ -8,6 +8,9 @@ function App() {
   const [readCharacters, setReadCharacters] = useState(new Set())
   const [detectedCharacters, setDetectedCharacters] = useState([])
 
+  // Use base URL for GitHub Pages compatibility
+  const epubUrl = `${import.meta.env.BASE_URL}zhenhuan.epub`
+
   const handleChapterChange = (chapterNum) => {
     setCurrentChapter(chapterNum)
   }
@@ -28,7 +31,7 @@ function App() {
     <div className="flex h-screen bg-gradient-to-br from-amber-100 to-yellow-200">
       <div className="w-[70%] h-full overflow-hidden border-r border-amber-300">
         <ChapterReader
-          epubUrl="/zhenhuan.epub"
+          epubUrl={epubUrl}
           onChapterChange={handleChapterChange}
           onTextUpdate={handleTextUpdate}
         />
