@@ -28,7 +28,7 @@ function App() {
     <div className="flex h-screen bg-gradient-to-br from-amber-100 to-yellow-200">
       <div className="w-[70%] h-full overflow-hidden border-r border-amber-300">
         <ChapterReader
-          epubUrl="/后宫·甄嬛传（修订典藏版）-流潋紫.epub"
+          epubUrl="/zhenhuan.epub"
           onChapterChange={handleChapterChange}
           onTextUpdate={handleTextUpdate}
         />
