@@ -5,7 +5,9 @@
       "Bash(ls:*)",
       "Bash(chmod:*)",
       "Bash(bash:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(git add:*)"
     ]
   }
 }
