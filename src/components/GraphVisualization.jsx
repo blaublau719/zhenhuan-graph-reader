@@ -350,11 +350,6 @@ export default function GraphVisualization({ graphData, currentChapter, eventCha
         </button>
 
         <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${themeConfig.panelBorder}` }}>
-          {eventChapter > 0 && (
-            <div className="text-sm mb-1" style={{ color: themeConfig.legendText }}>
-              剧情进度：<span className="font-bold" style={{ color: themeConfig.headerBg }}>第{eventChapter}卷</span>
-            </div>
-          )}
           <div className="text-sm mb-1" style={{ color: themeConfig.legendText }}>
             已发现人物：<span className="font-bold text-green-600">{readCharacters.size}</span> / {graphData.nodes.length}
           </div>
@@ -382,7 +377,7 @@ export default function GraphVisualization({ graphData, currentChapter, eventCha
           }}
         >
           <h4 className="text-sm font-bold mb-2" style={{ color: themeConfig.legendText }}>
-            📜 第{eventChapter}卷 剧情事件
+            📜 剧情事件
           </h4>
           {currentEvents.map((evt, i) => (
             <div
