@@ -61,15 +61,17 @@ export default function ChapterReader({ epubUrl, onChapterChange, onTextUpdate }
       }, 100)
     })
 
-    // Keyboard navigation
+    // Keyboard navigation (ArrowRight/ArrowDown = next, ArrowLeft/ArrowUp = prev)
     const handleKeyPress = (e) => {
-      if (e.key === 'ArrowRight') {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
         newRendition?.next()
-      } else if (e.key === 'ArrowLeft') {
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
         newRendition?.prev()
       }
     }
     document.addEventListener('keydown', handleKeyPress)
+    // Also register inside the epub iframe so keys work when it has focus
+    newRendition.on('keydown', handleKeyPress)
 
     return () => {
       document.removeEventListener('keydown', handleKeyPress)
@@ -87,7 +89,7 @@ export default function ChapterReader({ epubUrl, onChapterChange, onTextUpdate }
   const prevPage = () => rendition?.prev()
 
   return (
-    <div className="relative h-full bg-white">
+    <div className="relative h-full" style={{ background: '#dfc792' }}>
       {/* Header with controls */}
       <div className="absolute top-0 left-0 right-0 bg-amber-800 text-white p-4 z-10 shadow-lg">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
@@ -118,7 +120,7 @@ export default function ChapterReader({ epubUrl, onChapterChange, onTextUpdate }
         className="absolute top-16 left-0 right-0 bottom-20 overflow-hidden"
         style={{
           padding: '20px',
-          background: '#fff'
+          background: '#dfc792'
         }}
       />
 
@@ -146,7 +148,7 @@ export default function ChapterReader({ epubUrl, onChapterChange, onTextUpdate }
 
       {/* Loading indicator */}
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white">
+        <div className="absolute inset-0 flex items-center justify-center" style={{ background: '#dfc792' }}>
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-800 mb-4 mx-auto"></div>
             <p className="text-gray-600">正在加载电子书...</p>
