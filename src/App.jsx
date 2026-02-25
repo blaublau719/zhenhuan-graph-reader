@@ -1,21 +1,51 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import ChapterReader from './components/ChapterReader'
 import GraphVisualization from './components/GraphVisualization'
 import { graphData } from './data/graphData'
 
+const STORAGE_KEY_CHARS = 'zhenhuan-read-characters'
+const STORAGE_KEY_CHAPTER = 'zhenhuan-current-chapter'
+
 function App() {
-  const [currentChapter, setCurrentChapter] = useState(1)
-  const [readCharacters, setReadCharacters] = useState(new Set())
+  // Restore persisted state from localStorage
+  const [currentChapter, setCurrentChapter] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_CHAPTER)
+      return saved ? Number(saved) : 1
+    } catch { return 1 }
+  })
+
+  const [readCharacters, setReadCharacters] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_CHARS)
+      return saved ? new Set(JSON.parse(saved)) : new Set()
+    } catch { return new Set() }
+  })
+
   const [detectedCharacters, setDetectedCharacters] = useState([])
 
   // Use base URL for GitHub Pages compatibility
   const epubUrl = `${import.meta.env.BASE_URL}zhenhuan.epub`
 
-  const handleChapterChange = (chapterNum) => {
-    setCurrentChapter(chapterNum)
-  }
+  // Persist readCharacters whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_CHARS, JSON.stringify([...readCharacters]))
+    } catch { /* ignore storage errors */ }
+  }, [readCharacters])
 
-  const handleTextUpdate = (text) => {
+  // Persist currentChapter whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_CHAPTER, String(currentChapter))
+    } catch { /* ignore storage errors */ }
+  }, [currentChapter])
+
+  const handleChapterChange = useCallback((chapterNum) => {
+    setCurrentChapter(chapterNum)
+  }, [])
+
+  const handleTextUpdate = useCallback((text) => {
     // Scan text for character names
     const chars = new Set()
     graphData.nodes.forEach(node => {
@@ -24,8 +54,12 @@ function App() {
       }
     })
     setDetectedCharacters(Array.from(chars))
-    setReadCharacters(prev => new Set([...prev, ...chars]))
-  }
+    setReadCharacters(prev => {
+      const merged = new Set([...prev, ...chars])
+      if (merged.size === prev.size) return prev // no change, skip re-render
+      return merged
+    })
+  }, [])
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-amber-100 to-yellow-200">

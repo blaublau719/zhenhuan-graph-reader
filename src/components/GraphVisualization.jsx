@@ -1,11 +1,21 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import * as d3 from 'd3'
 
 export default function GraphVisualization({ graphData, currentChapter, readCharacters, detectedCharacters }) {
   const svgRef = useRef(null)
   const [selectedAlliance, setSelectedAlliance] = useState('all')
   const [showLabels, setShowLabels] = useState(true)
+
+  // Persistent refs for incremental updates
   const simulationRef = useRef(null)
+  const gRef = useRef(null)
+  const linkGroupRef = useRef(null)
+  const linkLabelGroupRef = useRef(null)
+  const nodeGroupRef = useRef(null)
+  const nodeLabelGroupRef = useRef(null)
+  const currentNodesRef = useRef([])
+  const currentEdgesRef = useRef([])
+  const initializedRef = useRef(false)
 
   const allianceColors = {
     "皇室成员": "#ff6b6b",
@@ -14,31 +24,20 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
     "华妃阵营": "#f38181"
   }
 
+  // One-time D3 scaffold setup
   useEffect(() => {
-    if (!svgRef.current) return
+    if (!svgRef.current || initializedRef.current) return
 
     const container = svgRef.current.parentElement
     const width = container.clientWidth
     const height = container.clientHeight
-
-    // Filter nodes based on detected characters in text
-    const visibleNodes = graphData.nodes.filter(node =>
-      readCharacters.has(node.Label)
-    )
-    const visibleNodeIds = new Set(visibleNodes.map(n => n.ID))
-    const visibleEdges = graphData.edges.filter(edge =>
-      visibleNodeIds.has(edge.source.ID || edge.source) &&
-      visibleNodeIds.has(edge.target.ID || edge.target)
-    )
-
-    // Clear previous visualization
-    d3.select(svgRef.current).selectAll('*').remove()
 
     const svg = d3.select(svgRef.current)
       .attr('width', width)
       .attr('height', height)
 
     const g = svg.append('g')
+    gRef.current = g
 
     // Zoom behavior
     const zoom = d3.zoom()
@@ -46,77 +45,165 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
       .on('zoom', (event) => {
         g.attr('transform', event.transform)
       })
-
     svg.call(zoom)
 
-    // Create force simulation
-    const simulation = d3.forceSimulation(visibleNodes)
-      .force('link', d3.forceLink(visibleEdges).id(d => d.ID).distance(80))
+    // Create group layers (order matters for z-index)
+    linkGroupRef.current = g.append('g').attr('class', 'links')
+    linkLabelGroupRef.current = g.append('g').attr('class', 'link-labels')
+    nodeGroupRef.current = g.append('g').attr('class', 'nodes')
+    nodeLabelGroupRef.current = g.append('g').attr('class', 'node-labels')
+
+    // Create force simulation (empty initially)
+    const simulation = d3.forceSimulation([])
+      .force('link', d3.forceLink([]).id(d => d.ID).distance(80))
       .force('charge', d3.forceManyBody().strength(-200))
       .force('center', d3.forceCenter(width / 2, height / 2))
       .force('collision', d3.forceCollide().radius(25))
 
     simulationRef.current = simulation
+    initializedRef.current = true
 
-    // Create links
-    const link = g.append('g')
+    return () => {
+      if (simulationRef.current) simulationRef.current.stop()
+    }
+  }, [])
+
+  // Incremental node/edge update when readCharacters changes
+  useEffect(() => {
+    if (!initializedRef.current || !simulationRef.current) return
+
+    const simulation = simulationRef.current
+    const prevNodeIds = new Set(currentNodesRef.current.map(n => n.ID))
+
+    // Determine which nodes should be visible
+    const visibleNodes = graphData.nodes.filter(node =>
+      readCharacters.has(node.Label)
+    )
+    const visibleNodeIds = new Set(visibleNodes.map(n => n.ID))
+    const visibleEdges = graphData.edges.filter(edge => {
+      const srcId = edge.source.ID !== undefined ? edge.source.ID : edge.source
+      const tgtId = edge.target.ID !== undefined ? edge.target.ID : edge.target
+      return visibleNodeIds.has(srcId) && visibleNodeIds.has(tgtId)
+    })
+
+    // Check if anything actually changed
+    const newNodeIds = new Set(visibleNodes.map(n => n.ID))
+    const hasNewNodes = visibleNodes.some(n => !prevNodeIds.has(n.ID))
+    const hasRemovedNodes = currentNodesRef.current.some(n => !newNodeIds.has(n.ID))
+
+    if (!hasNewNodes && !hasRemovedNodes && currentNodesRef.current.length > 0) return
+
+    // Preserve positions of existing nodes
+    const positionMap = new Map()
+    currentNodesRef.current.forEach(n => {
+      positionMap.set(n.ID, { x: n.x, y: n.y, vx: n.vx, vy: n.vy })
+    })
+
+    const container = svgRef.current.parentElement
+    const width = container.clientWidth
+    const height = container.clientHeight
+
+    // Merge positions into visible nodes
+    const mergedNodes = visibleNodes.map(node => {
+      const existing = positionMap.get(node.ID)
+      if (existing) {
+        return { ...node, x: existing.x, y: existing.y, vx: existing.vx, vy: existing.vy }
+      }
+      // New nodes appear near center with slight randomness
+      return { ...node, x: width / 2 + (Math.random() - 0.5) * 50, y: height / 2 + (Math.random() - 0.5) * 50 }
+    })
+
+    currentNodesRef.current = mergedNodes
+    currentEdgesRef.current = visibleEdges.map(e => ({ ...e }))
+
+    // --- Update D3 selections (enter/update/exit pattern) ---
+
+    // Links
+    const linkSel = linkGroupRef.current
       .selectAll('line')
-      .data(visibleEdges)
-      .enter().append('line')
-      .attr('class', 'link')
+      .data(currentEdgesRef.current, d => {
+        const src = d.source.ID !== undefined ? d.source.ID : d.source
+        const tgt = d.target.ID !== undefined ? d.target.ID : d.target
+        return `${src}-${tgt}`
+      })
+
+    linkSel.exit().remove()
+
+    const linkEnter = linkSel.enter().append('line')
       .attr('stroke', '#999')
       .attr('stroke-opacity', 0.6)
       .attr('stroke-width', 1.5)
 
-    // Create link labels
-    const linkLabel = g.append('g')
+    const link = linkEnter.merge(linkSel)
+
+    // Link labels
+    const linkLabelSel = linkLabelGroupRef.current
       .selectAll('text')
-      .data(visibleEdges)
-      .enter().append('text')
-      .attr('class', 'link-label')
+      .data(currentEdgesRef.current, d => {
+        const src = d.source.ID !== undefined ? d.source.ID : d.source
+        const tgt = d.target.ID !== undefined ? d.target.ID : d.target
+        return `${src}-${tgt}`
+      })
+
+    linkLabelSel.exit().remove()
+
+    const linkLabelEnter = linkLabelSel.enter().append('text')
       .attr('font-size', '10px')
       .attr('fill', '#666')
       .attr('text-anchor', 'middle')
       .attr('pointer-events', 'none')
       .text(d => d.Relationship)
-      .style('opacity', showLabels ? 1 : 0)
 
-    // Create nodes
-    const node = g.append('g')
+    const linkLabel = linkLabelEnter.merge(linkLabelSel)
+    linkLabel.style('opacity', showLabels ? 1 : 0)
+
+    // Nodes
+    const nodeSel = nodeGroupRef.current
       .selectAll('circle')
-      .data(visibleNodes)
-      .enter().append('circle')
-      .attr('class', 'node')
+      .data(currentNodesRef.current, d => d.ID)
+
+    nodeSel.exit().remove()
+
+    const nodeEnter = nodeSel.enter().append('circle')
       .attr('r', 10)
       .attr('fill', d => allianceColors[d.Alliance] || '#999')
       .attr('stroke', '#fff')
       .attr('stroke-width', 2)
       .style('cursor', 'pointer')
       .call(d3.drag()
-        .on('start', dragstarted)
-        .on('drag', dragged)
-        .on('end', dragended))
+        .on('start', (event, d) => {
+          if (!event.active) simulation.alphaTarget(0.3).restart()
+          d.fx = d.x
+          d.fy = d.y
+        })
+        .on('drag', (event, d) => {
+          d.fx = event.x
+          d.fy = event.y
+        })
+        .on('end', (event, d) => {
+          if (!event.active) simulation.alphaTarget(0)
+          d.fx = null
+          d.fy = null
+        }))
       .on('mouseover', function(event, d) {
-        d3.select(this)
-          .attr('stroke', '#ffd700')
-          .attr('stroke-width', 3)
-
+        d3.select(this).attr('stroke', '#ffd700').attr('stroke-width', 3)
         showTooltip(event, d)
       })
       .on('mouseout', function() {
-        d3.select(this)
-          .attr('stroke', '#fff')
-          .attr('stroke-width', 2)
-
+        d3.select(this).attr('stroke', '#fff').attr('stroke-width', 2)
         hideTooltip()
       })
 
-    // Create node labels
-    const nodeLabel = g.append('g')
+    const node = nodeEnter.merge(nodeSel)
+
+    // Node labels
+    const nodeLabelSel = nodeLabelGroupRef.current
       .selectAll('text')
-      .data(visibleNodes)
-      .enter().append('text')
-      .attr('class', 'node-label')
+      .data(currentNodesRef.current, d => d.ID)
+
+    nodeLabelSel.exit().remove()
+
+    const nodeLabelEnter = nodeLabelSel.enter().append('text')
       .attr('font-size', '12px')
       .attr('font-weight', 'bold')
       .attr('text-anchor', 'middle')
@@ -125,9 +212,14 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
       .attr('dy', -15)
       .style('text-shadow', '1px 1px 2px rgba(255,255,255,0.8)')
       .text(d => d.Label)
-      .style('opacity', showLabels ? 1 : 0)
 
-    // Update positions on each tick
+    const nodeLabel = nodeLabelEnter.merge(nodeLabelSel)
+    nodeLabel.style('opacity', showLabels ? 1 : 0)
+
+    // --- Update simulation ---
+    simulation.nodes(currentNodesRef.current)
+    simulation.force('link').links(currentEdgesRef.current)
+
     simulation.on('tick', () => {
       link
         .attr('x1', d => d.source.x)
@@ -148,47 +240,35 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
         .attr('y', d => d.y)
     })
 
-    function dragstarted(event, d) {
-      if (!event.active) simulation.alphaTarget(0.3).restart()
-      d.fx = d.x
-      d.fy = d.y
-    }
+    // Gently reheat — existing nodes barely move, new nodes settle in
+    simulation.alpha(0.3).restart()
 
-    function dragged(event, d) {
-      d.fx = event.x
-      d.fy = event.y
-    }
+  }, [graphData, readCharacters, showLabels])
 
-    function dragended(event, d) {
-      if (!event.active) simulation.alphaTarget(0)
-      d.fx = null
-      d.fy = null
-    }
+  // Alliance filter (visual only, no simulation restart)
+  useEffect(() => {
+    if (!nodeGroupRef.current) return
 
-    // Apply alliance filter
-    if (selectedAlliance !== 'all') {
-      node.style('opacity', d => d.Alliance === selectedAlliance ? 1 : 0.1)
-      link.style('opacity', d => {
-        return (d.source.Alliance === selectedAlliance || d.target.Alliance === selectedAlliance) ? 0.6 : 0.05
-      })
-      nodeLabel.style('opacity', d => {
-        return (d.Alliance === selectedAlliance && showLabels) ? 1 : 0
-      })
+    if (selectedAlliance === 'all') {
+      nodeGroupRef.current.selectAll('circle').style('opacity', 1)
+      linkGroupRef.current.selectAll('line').style('opacity', 0.6)
+      nodeLabelGroupRef.current.selectAll('text').style('opacity', showLabels ? 1 : 0)
+    } else {
+      nodeGroupRef.current.selectAll('circle')
+        .style('opacity', d => d.Alliance === selectedAlliance ? 1 : 0.1)
+      linkGroupRef.current.selectAll('line')
+        .style('opacity', d => (d.source.Alliance === selectedAlliance || d.target.Alliance === selectedAlliance) ? 0.6 : 0.05)
+      nodeLabelGroupRef.current.selectAll('text')
+        .style('opacity', d => (d.Alliance === selectedAlliance && showLabels) ? 1 : 0)
     }
-
-    // Cleanup
-    return () => {
-      if (simulation) simulation.stop()
-    }
-
-  }, [graphData, currentChapter, selectedAlliance, showLabels, readCharacters])
+  }, [selectedAlliance, showLabels])
 
   const handleResetZoom = () => {
     const svg = d3.select(svgRef.current)
     const zoom = d3.zoom()
       .scaleExtent([0.1, 4])
       .on('zoom', (event) => {
-        d3.select(svgRef.current).select('g').attr('transform', event.transform)
+        if (gRef.current) gRef.current.attr('transform', event.transform)
       })
 
     svg.transition().duration(750).call(

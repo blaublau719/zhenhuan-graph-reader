@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import ePub from 'epubjs'
 
+const STORAGE_KEY_LOCATION = 'zhenhuan-epub-location'
+
 export default function ChapterReader({ epubUrl, onChapterChange, onTextUpdate }) {
   const viewerRef = useRef(null)
   const [book, setBook] = useState(null)
@@ -24,7 +26,17 @@ export default function ChapterReader({ epubUrl, onChapterChange, onTextUpdate }
       spread: 'none'
     })
 
-    newRendition.display()
+    // Apply font color theme to epub content
+    newRendition.themes.default({
+      body: { color: '#28390b !important' },
+      'p, div, span, h1, h2, h3, h4, h5, h6, li, a': { color: '#28390b !important' }
+    })
+
+    // Restore saved reading position or start from beginning
+    const savedLocation = (() => {
+      try { return localStorage.getItem(STORAGE_KEY_LOCATION) } catch { return null }
+    })()
+    newRendition.display(savedLocation || undefined)
     setRendition(newRendition)
 
     // Load table of contents
@@ -33,16 +45,14 @@ export default function ChapterReader({ epubUrl, onChapterChange, onTextUpdate }
       setIsLoading(false)
     })
 
-    // Track reading progress and extract text
-    newRendition.on('rendered', () => {
-      // Get current text content
-      newRendition.getContents().forEach(contents => {
-        const text = contents.document.body.textContent || ''
-        onTextUpdate(text)
-      })
+    // Reliable text extraction via content hook — fires on every content load
+    // (page turn, chapter jump, initial load) with guaranteed DOM readiness
+    newRendition.hooks.content.register((contents) => {
+      const text = contents.document.body.textContent || ''
+      onTextUpdate(text)
     })
 
-    // Track location changes
+    // Track location changes and persist reading position
     newRendition.on('relocated', (location) => {
       setCurrentPage(location.start.displayed.page)
       setTotalPages(location.start.displayed.total)
@@ -52,13 +62,12 @@ export default function ChapterReader({ epubUrl, onChapterChange, onTextUpdate }
       const estimatedChapter = Math.max(1, Math.min(5, Math.ceil(progress * 5)))
       onChapterChange(estimatedChapter)
 
-      // Extract text on every page change to update graph
-      setTimeout(() => {
-        newRendition.getContents().forEach(contents => {
-          const text = contents.document.body.textContent || ''
-          onTextUpdate(text)
-        })
-      }, 100)
+      // Save current position to localStorage
+      try {
+        if (location.start.cfi) {
+          localStorage.setItem(STORAGE_KEY_LOCATION, location.start.cfi)
+        }
+      } catch { /* ignore storage errors */ }
     })
 
     // Keyboard navigation (ArrowRight/ArrowDown = next, ArrowLeft/ArrowUp = prev)
