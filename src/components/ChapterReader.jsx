@@ -3,6 +3,12 @@ import ePub from 'epubjs'
 
 const STORAGE_KEY_LOCATION = 'zhenhuan-epub-location'
 
+// Extract filename from href for reliable comparison (strip path prefix and anchor)
+const hrefBasename = (href) => {
+  if (!href) return ''
+  return href.replace(/^.*\//, '').replace(/#.*$/, '')
+}
+
 export default function ChapterReader({
   epubUrl,
   onChapterChange,
@@ -22,6 +28,8 @@ export default function ChapterReader({
 }) {
   const viewerRef = useRef(null)
   const renditionRef = useRef(null)
+  const bookRef = useRef(null)
+  const locationsReadyRef = useRef(false)
   const [currentPage, setCurrentPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [toc, setToc] = useState([])
@@ -34,6 +42,7 @@ export default function ChapterReader({
     if (!viewerRef.current) return
 
     const newBook = ePub(epubUrl)
+    bookRef.current = newBook
 
     const newRendition = newBook.renderTo(viewerRef.current, {
       width: '100%',
@@ -72,6 +81,13 @@ export default function ChapterReader({
       setIsLoading(false)
     })
 
+    // Generate locations for accurate progress percentage
+    newBook.ready.then(() => {
+      return newBook.locations.generate(1024)
+    }).then(() => {
+      locationsReadyRef.current = true
+    })
+
     // Reliable text extraction via content hook
     newRendition.hooks.content.register((contents) => {
       const text = contents.document.body.textContent || ''
@@ -83,12 +99,18 @@ export default function ChapterReader({
       setCurrentPage(location.start.displayed.page)
       setTotalPages(location.start.displayed.total)
 
-      const progress = location.start.percentage
-      setOverallProgress(Math.round(progress * 100))
+      // Use locations-based percentage if available, fallback to atEnd for basic progress
+      if (locationsReadyRef.current && location.start.cfi) {
+        const pct = newBook.locations.percentageFromCfi(location.start.cfi)
+        setOverallProgress(Math.round(pct * 100))
+      }
+      const progress = locationsReadyRef.current && location.start.cfi
+        ? newBook.locations.percentageFromCfi(location.start.cfi)
+        : location.start.percentage || 0
       const estimatedChapter = Math.max(1, Math.min(5, Math.ceil(progress * 5)))
       onChapterChange(estimatedChapter)
 
-      // Track current chapter href for TOC highlighting
+      // Track current chapter href for TOC highlighting (store just the filename)
       if (location.start.href) {
         setCurrentChapterHref(location.start.href)
       }
@@ -115,6 +137,8 @@ export default function ChapterReader({
       document.removeEventListener('keydown', handleKeyPress)
       newRendition?.destroy()
       renditionRef.current = null
+      bookRef.current = null
+      locationsReadyRef.current = false
     }
   }, [epubUrl])
 
@@ -168,9 +192,10 @@ export default function ChapterReader({
   const nextPage = () => renditionRef.current?.next()
   const prevPage = () => renditionRef.current?.prev()
 
-  // Derive current chapter label and index from TOC
+  // Derive current chapter label and index from TOC (compare basenames to avoid path prefix mismatch)
+  const currentBase = hrefBasename(currentChapterHref)
   const currentChapterIdx = toc.findIndex(ch =>
-    currentChapterHref && ch.href && currentChapterHref.includes(ch.href)
+    currentBase && ch.href && hrefBasename(ch.href) === currentBase
   )
   const currentChapterLabel = currentChapterIdx >= 0
     ? toc[currentChapterIdx].label?.trim()
@@ -304,8 +329,8 @@ export default function ChapterReader({
               }}
             >
               {toc.map((chapter, index) => {
-                const isActive = currentChapterHref && chapter.href &&
-                  currentChapterHref.includes(chapter.href)
+                const isActive = currentBase && chapter.href &&
+                  hrefBasename(chapter.href) === currentBase
                 return (
                   <button
                     key={index}
