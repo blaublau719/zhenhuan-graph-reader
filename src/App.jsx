@@ -5,9 +5,74 @@ import { graphData } from './data/graphData'
 
 const STORAGE_KEY_CHARS = 'zhenhuan-read-characters'
 const STORAGE_KEY_CHAPTER = 'zhenhuan-current-chapter'
+const STORAGE_KEY_THEME = 'zhenhuan-theme'
+const STORAGE_KEY_FONT = 'zhenhuan-font'
+
+const FONT_OPTIONS = [
+  { label: '宋体', value: '"SimSun", "Songti SC", "Noto Serif SC", serif' },
+  { label: '楷体', value: '"KaiTi", "STKaiti", "Kaiti SC", serif' },
+  { label: '黑体', value: '"SimHei", "Heiti SC", "Noto Sans SC", sans-serif' },
+  { label: '仿宋', value: '"FangSong", "STFangsong", "Fangsong SC", serif' },
+]
+
+const THEMES = {
+  light: {
+    name: '☀️ 浅色',
+    headerBg: '#92400e',       // amber-800
+    headerBtnBg: '#b45309',    // amber-700
+    headerBtnHover: '#d97706', // amber-600
+    readerBg: '#dfc792',
+    textColor: '#28390b',
+    tocBg: '#f3f4f6',
+    tocBorder: '#d1d5db',
+    tocText: '#1f2937',
+    tocBtnBg: '#ffffff',
+    tocBtnBorder: '#d1d5db',
+    tocBtnHoverBg: '#fef3c7',
+    loadingText: '#6b7280',
+    appBg: 'linear-gradient(135deg, #fef3c7, #fde68a)',
+    borderColor: '#fbbf24',
+    graphBg: 'linear-gradient(135deg, #fde68a, #fcd34d)',
+    panelBg: 'rgba(255,255,255,0.95)',
+    panelText: '#1f2937',
+    panelBorder: '#d1d5db',
+    legendText: '#374151',
+    nodeLabelFill: '#333',
+    nodeLabelShadow: '1px 1px 2px rgba(255,255,255,0.8)',
+    linkLabelFill: '#666',
+    tooltipBg: 'rgba(0,0,0,0.9)',
+    tooltipText: '#fff',
+  },
+  dark: {
+    name: '🌙 深色',
+    headerBg: '#7c9b18',
+    headerBtnBg: '#6b8a10',
+    headerBtnHover: '#8aaf1e',
+    readerBg: '#3e4c0e',
+    textColor: '#ffffff',
+    tocBg: '#2d3a08',
+    tocBorder: '#5a6b2a',
+    tocText: '#e5e7eb',
+    tocBtnBg: '#4a5c1a',
+    tocBtnBorder: '#5a6b2a',
+    tocBtnHoverBg: '#5a6b2a',
+    loadingText: '#d1d5db',
+    appBg: 'linear-gradient(135deg, #3e4c0e, #2d3a08)',
+    borderColor: '#5a6b2a',
+    graphBg: '#6b7856',
+    panelBg: 'rgba(45,58,8,0.95)',
+    panelText: '#e5e7eb',
+    panelBorder: '#5a6b2a',
+    legendText: '#d1d5db',
+    nodeLabelFill: '#f3f4f6',
+    nodeLabelShadow: '1px 1px 2px rgba(0,0,0,0.6)',
+    linkLabelFill: '#d1d5db',
+    tooltipBg: 'rgba(30,40,10,0.95)',
+    tooltipText: '#fff',
+  }
+}
 
 function App() {
-  // Restore persisted state from localStorage
   const [currentChapter, setCurrentChapter] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_CHAPTER)
@@ -24,29 +89,45 @@ function App() {
 
   const [detectedCharacters, setDetectedCharacters] = useState([])
 
-  // Use base URL for GitHub Pages compatibility
-  const epubUrl = `${import.meta.env.BASE_URL}zhenhuan.epub`
-
-  // Persist readCharacters whenever it changes
-  useEffect(() => {
+  const [theme, setTheme] = useState(() => {
     try {
-      localStorage.setItem(STORAGE_KEY_CHARS, JSON.stringify([...readCharacters]))
-    } catch { /* ignore storage errors */ }
+      return localStorage.getItem(STORAGE_KEY_THEME) || 'light'
+    } catch { return 'light' }
+  })
+
+  const [fontIndex, setFontIndex] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_FONT)
+      return saved ? Number(saved) : 0
+    } catch { return 0 }
+  })
+
+  const epubUrl = `${import.meta.env.BASE_URL}zhenhuan.epub`
+  const themeConfig = THEMES[theme]
+  const currentFont = FONT_OPTIONS[fontIndex]
+
+  // Persist state
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY_CHARS, JSON.stringify([...readCharacters])) } catch {}
   }, [readCharacters])
 
-  // Persist currentChapter whenever it changes
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY_CHAPTER, String(currentChapter))
-    } catch { /* ignore storage errors */ }
+    try { localStorage.setItem(STORAGE_KEY_CHAPTER, String(currentChapter)) } catch {}
   }, [currentChapter])
+
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY_THEME, theme) } catch {}
+  }, [theme])
+
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY_FONT, String(fontIndex)) } catch {}
+  }, [fontIndex])
 
   const handleChapterChange = useCallback((chapterNum) => {
     setCurrentChapter(chapterNum)
   }, [])
 
   const handleTextUpdate = useCallback((text) => {
-    // Scan text for character names
     const chars = new Set()
     graphData.nodes.forEach(node => {
       if (text.includes(node.Label)) {
@@ -56,18 +137,34 @@ function App() {
     setDetectedCharacters(Array.from(chars))
     setReadCharacters(prev => {
       const merged = new Set([...prev, ...chars])
-      if (merged.size === prev.size) return prev // no change, skip re-render
+      if (merged.size === prev.size) return prev
       return merged
     })
   }, [])
 
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light')
+  }, [])
+
+  const cycleFont = useCallback(() => {
+    setFontIndex(prev => (prev + 1) % FONT_OPTIONS.length)
+  }, [])
+
   return (
-    <div className="flex h-screen bg-gradient-to-br from-amber-100 to-yellow-200">
-      <div className="w-[70%] h-full overflow-hidden border-r border-amber-300">
+    <div className="flex h-screen" style={{ background: themeConfig.appBg }}>
+      <div
+        className="w-[70%] h-full overflow-hidden"
+        style={{ borderRight: `1px solid ${themeConfig.borderColor}` }}
+      >
         <ChapterReader
           epubUrl={epubUrl}
           onChapterChange={handleChapterChange}
           onTextUpdate={handleTextUpdate}
+          themeConfig={themeConfig}
+          fontFamily={currentFont.value}
+          fontLabel={currentFont.label}
+          onToggleTheme={toggleTheme}
+          onCycleFont={cycleFont}
         />
       </div>
       <div className="w-[30%] h-full">
@@ -76,6 +173,7 @@ function App() {
           currentChapter={currentChapter}
           readCharacters={readCharacters}
           detectedCharacters={detectedCharacters}
+          themeConfig={themeConfig}
         />
       </div>
     </div>

@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as d3 from 'd3'
 
-export default function GraphVisualization({ graphData, currentChapter, readCharacters, detectedCharacters }) {
+export default function GraphVisualization({ graphData, currentChapter, readCharacters, detectedCharacters, themeConfig }) {
   const svgRef = useRef(null)
   const [selectedAlliance, setSelectedAlliance] = useState('all')
   const [showLabels, setShowLabels] = useState(true)
@@ -39,7 +39,6 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
     const g = svg.append('g')
     gRef.current = g
 
-    // Zoom behavior
     const zoom = d3.zoom()
       .scaleExtent([0.1, 4])
       .on('zoom', (event) => {
@@ -47,13 +46,11 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
       })
     svg.call(zoom)
 
-    // Create group layers (order matters for z-index)
     linkGroupRef.current = g.append('g').attr('class', 'links')
     linkLabelGroupRef.current = g.append('g').attr('class', 'link-labels')
     nodeGroupRef.current = g.append('g').attr('class', 'nodes')
     nodeLabelGroupRef.current = g.append('g').attr('class', 'node-labels')
 
-    // Create force simulation (empty initially)
     const simulation = d3.forceSimulation([])
       .force('link', d3.forceLink([]).id(d => d.ID).distance(80))
       .force('charge', d3.forceManyBody().strength(-200))
@@ -75,7 +72,6 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
     const simulation = simulationRef.current
     const prevNodeIds = new Set(currentNodesRef.current.map(n => n.ID))
 
-    // Determine which nodes should be visible
     const visibleNodes = graphData.nodes.filter(node =>
       readCharacters.has(node.Label)
     )
@@ -86,14 +82,12 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
       return visibleNodeIds.has(srcId) && visibleNodeIds.has(tgtId)
     })
 
-    // Check if anything actually changed
     const newNodeIds = new Set(visibleNodes.map(n => n.ID))
     const hasNewNodes = visibleNodes.some(n => !prevNodeIds.has(n.ID))
     const hasRemovedNodes = currentNodesRef.current.some(n => !newNodeIds.has(n.ID))
 
     if (!hasNewNodes && !hasRemovedNodes && currentNodesRef.current.length > 0) return
 
-    // Preserve positions of existing nodes
     const positionMap = new Map()
     currentNodesRef.current.forEach(n => {
       positionMap.set(n.ID, { x: n.x, y: n.y, vx: n.vx, vy: n.vy })
@@ -103,20 +97,16 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
     const width = container.clientWidth
     const height = container.clientHeight
 
-    // Merge positions into visible nodes
     const mergedNodes = visibleNodes.map(node => {
       const existing = positionMap.get(node.ID)
       if (existing) {
         return { ...node, x: existing.x, y: existing.y, vx: existing.vx, vy: existing.vy }
       }
-      // New nodes appear near center with slight randomness
       return { ...node, x: width / 2 + (Math.random() - 0.5) * 50, y: height / 2 + (Math.random() - 0.5) * 50 }
     })
 
     currentNodesRef.current = mergedNodes
     currentEdgesRef.current = visibleEdges.map(e => ({ ...e }))
-
-    // --- Update D3 selections (enter/update/exit pattern) ---
 
     // Links
     const linkSel = linkGroupRef.current
@@ -149,13 +139,14 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
 
     const linkLabelEnter = linkLabelSel.enter().append('text')
       .attr('font-size', '10px')
-      .attr('fill', '#666')
       .attr('text-anchor', 'middle')
       .attr('pointer-events', 'none')
       .text(d => d.Relationship)
 
     const linkLabel = linkLabelEnter.merge(linkLabelSel)
-    linkLabel.style('opacity', showLabels ? 1 : 0)
+    linkLabel
+      .attr('fill', themeConfig.linkLabelFill)
+      .style('opacity', showLabels ? 1 : 0)
 
     // Nodes
     const nodeSel = nodeGroupRef.current
@@ -208,15 +199,16 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
       .attr('font-weight', 'bold')
       .attr('text-anchor', 'middle')
       .attr('pointer-events', 'none')
-      .attr('fill', '#333')
       .attr('dy', -15)
-      .style('text-shadow', '1px 1px 2px rgba(255,255,255,0.8)')
       .text(d => d.Label)
 
     const nodeLabel = nodeLabelEnter.merge(nodeLabelSel)
-    nodeLabel.style('opacity', showLabels ? 1 : 0)
+    nodeLabel
+      .attr('fill', themeConfig.nodeLabelFill)
+      .style('text-shadow', themeConfig.nodeLabelShadow)
+      .style('opacity', showLabels ? 1 : 0)
 
-    // --- Update simulation ---
+    // Update simulation
     simulation.nodes(currentNodesRef.current)
     simulation.force('link').links(currentEdgesRef.current)
 
@@ -240,12 +232,23 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
         .attr('y', d => d.y)
     })
 
-    // Gently reheat — existing nodes barely move, new nodes settle in
     simulation.alpha(0.3).restart()
 
-  }, [graphData, readCharacters, showLabels])
+  }, [graphData, readCharacters, showLabels, themeConfig])
 
-  // Alliance filter (visual only, no simulation restart)
+  // Update label colors when theme changes (without restarting simulation)
+  useEffect(() => {
+    if (!nodeLabelGroupRef.current || !linkLabelGroupRef.current) return
+
+    nodeLabelGroupRef.current.selectAll('text')
+      .attr('fill', themeConfig.nodeLabelFill)
+      .style('text-shadow', themeConfig.nodeLabelShadow)
+
+    linkLabelGroupRef.current.selectAll('text')
+      .attr('fill', themeConfig.linkLabelFill)
+  }, [themeConfig])
+
+  // Alliance filter (visual only)
   useEffect(() => {
     if (!nodeGroupRef.current) return
 
@@ -271,10 +274,7 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
         if (gRef.current) gRef.current.attr('transform', event.transform)
       })
 
-    svg.transition().duration(750).call(
-      zoom.transform,
-      d3.zoomIdentity
-    )
+    svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity)
   }
 
   const showTooltip = (event, d) => {
@@ -288,6 +288,8 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
       `)
       .style('left', (event.pageX + 10) + 'px')
       .style('top', (event.pageY + 10) + 'px')
+      .style('background', themeConfig.tooltipBg)
+      .style('color', themeConfig.tooltipText)
   }
 
   const hideTooltip = () => {
@@ -295,18 +297,32 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
   }
 
   return (
-    <div className="relative w-full h-full bg-gradient-to-br from-amber-200 to-yellow-300">
+    <div
+      className="relative w-full h-full"
+      style={{ background: themeConfig.graphBg }}
+    >
       <svg ref={svgRef} className="w-full h-full" />
 
       {/* Controls */}
-      <div className="absolute top-5 left-5 bg-white bg-opacity-95 p-4 rounded-lg shadow-lg z-10">
-        <h3 className="text-lg font-bold text-gray-800 mb-3">控制面板</h3>
+      <div
+        className="absolute top-5 left-5 p-4 rounded-lg shadow-lg z-10"
+        style={{
+          background: themeConfig.panelBg,
+          color: themeConfig.panelText,
+        }}
+      >
+        <h3 className="text-lg font-bold mb-3">控制面板</h3>
 
-        <label className="block text-sm text-gray-700 mb-1">阵营筛选：</label>
+        <label className="block text-sm mb-1" style={{ color: themeConfig.legendText }}>阵营筛选：</label>
         <select
           value={selectedAlliance}
           onChange={(e) => setSelectedAlliance(e.target.value)}
-          className="w-full mb-3 p-2 border border-gray-300 rounded text-sm"
+          className="w-full mb-3 p-2 rounded text-sm"
+          style={{
+            background: themeConfig.tocBtnBg,
+            border: `1px solid ${themeConfig.panelBorder}`,
+            color: themeConfig.panelText,
+          }}
         >
           <option value="all">全部</option>
           <option value="皇室成员">皇室成员</option>
@@ -317,38 +333,46 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
 
         <button
           onClick={handleResetZoom}
-          className="w-full mb-2 px-4 py-2 bg-amber-700 text-white rounded hover:bg-amber-800 transition text-sm"
+          className="w-full mb-2 px-4 py-2 text-white rounded transition text-sm"
+          style={{ background: themeConfig.headerBg }}
         >
           重置视图
         </button>
 
         <button
           onClick={() => setShowLabels(!showLabels)}
-          className="w-full px-4 py-2 bg-amber-700 text-white rounded hover:bg-amber-800 transition text-sm"
+          className="w-full px-4 py-2 text-white rounded transition text-sm"
+          style={{ background: themeConfig.headerBg }}
         >
           {showLabels ? '隐藏标签' : '显示标签'}
         </button>
 
-        <div className="mt-3 pt-3 border-t border-gray-300">
-          <div className="text-sm text-gray-600 mb-1">
-            当前章节：<span className="font-bold text-amber-700">第{currentChapter}章</span>
+        <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${themeConfig.panelBorder}` }}>
+          <div className="text-sm mb-1" style={{ color: themeConfig.legendText }}>
+            当前章节：<span className="font-bold" style={{ color: themeConfig.headerBg }}>第{currentChapter}章</span>
           </div>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm" style={{ color: themeConfig.legendText }}>
             已发现人物：<span className="font-bold text-green-600">{readCharacters.size}</span> / {graphData.nodes.length}
           </div>
         </div>
       </div>
 
       {/* Legend */}
-      <div className="absolute bottom-5 left-5 bg-white bg-opacity-95 p-4 rounded-lg shadow-lg z-10">
-        <h4 className="text-base font-bold text-gray-800 mb-3">阵营图例</h4>
+      <div
+        className="absolute bottom-5 left-5 p-4 rounded-lg shadow-lg z-10"
+        style={{
+          background: themeConfig.panelBg,
+          color: themeConfig.panelText,
+        }}
+      >
+        <h4 className="text-base font-bold mb-3">阵营图例</h4>
         {Object.entries(allianceColors).map(([alliance, color]) => (
           <div key={alliance} className="flex items-center mb-2">
             <div
               className="w-5 h-5 rounded-full mr-3 border-2 border-white"
               style={{ backgroundColor: color }}
             />
-            <span className="text-sm text-gray-700">{alliance}</span>
+            <span className="text-sm" style={{ color: themeConfig.legendText }}>{alliance}</span>
           </div>
         ))}
       </div>
@@ -356,8 +380,12 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
       {/* Tooltip */}
       <div
         id="tooltip"
-        className="fixed bg-black bg-opacity-90 text-white p-3 rounded-lg pointer-events-none shadow-lg z-50 max-w-xs"
-        style={{ display: 'none' }}
+        className="fixed p-3 rounded-lg pointer-events-none shadow-lg z-50 max-w-xs"
+        style={{
+          display: 'none',
+          background: themeConfig.tooltipBg,
+          color: themeConfig.tooltipText,
+        }}
       />
     </div>
   )
