@@ -1,135 +1,109 @@
 # 📖 Graph Book Reader - 甄嬛传版
 
-一个动态的图书阅读器，左边显示 EPUB 电子书内容，右边实时显示人物关系图谱。
+一个动态的图书阅读器，左边显示 EPUB 电子书内容，右边实时显示人物关系图谱。随着阅读进度推进，图谱中的人物逐步浮现。
+
+🔗 **在线体验：[https://blaublau719.github.io/zhenhuan-graph-reader/](https://blaublau719.github.io/zhenhuan-graph-reader/)**
+
+---
+
+## 📘 使用手册
+
+### 阅读器（左栏，70%）
+
+| 功能     | 操作                                                                 |
+| -------- | -------------------------------------------------------------------- |
+| 翻页     | 点击 **← 上一页 / 下一页 →** 按钮，或使用键盘 `←` `→` `↑` `↓` 方向键 |
+| 章节跳转 | 点击底部 **📑 目录** 展开目录列表，点击任意章节直接跳转              |
+| 阅读进度 | 顶部栏显示 **当前页 / 总页数**                                       |
+| 进度保存 | 自动保存阅读位置到浏览器，下次打开自动恢复到上次阅读处               |
+
+- 阅读背景色为古卷黄（`#dfc792`），字体色为墨绿（`#28390b`），模拟古籍阅读体验
+- 使用 epub.js 解析渲染《后宫·甄嬛传（修订典藏版）》EPUB 文件
+
+### 人物关系图（右栏，30%）
+
+| 功能     | 操作                                                  |
+| -------- | ----------------------------------------------------- |
+| 阵营筛选 | 在控制面板下拉菜单中选择阵营，仅高亮该阵营人物        |
+| 缩放     | 鼠标滚轮缩放图谱                                      |
+| 拖拽节点 | 按住人物节点拖动，调整布局                            |
+| 重置视图 | 点击 **重置视图** 按钮回到初始缩放位置                |
+| 标签切换 | 点击 **显示标签 / 隐藏标签** 控制人名和关系标签的显示 |
+| 角色详情 | 鼠标悬停在人物节点上，显示姓名、职位、阵营、登场章节  |
+
+#### 核心机制：随阅读进度动态显示
+
+- 每翻一页，阅读器自动扫描当前页文本，匹配 44 个预设人物名
+- 匹配到的人物实时添加到图谱中（**增量更新**，已有节点保持位置不变）
+- 人物一旦出现就永久显示（只增不减），控制面板显示 **已发现人物** 计数
+- 跳转章节同样触发文本扫描，图谱跟随更新
+- 已发现的人物列表保存到浏览器，下次打开时自动恢复图谱状态
+
+#### 阵营配色
+
+| 阵营        | 颜色      |
+| ----------- | --------- |
+| 🔴 皇室成员 | `#ff6b6b` |
+| 🔵 皇后阵营 | `#4ecdc4` |
+| 🟢 甄嬛阵营 | `#95e1d3` |
+| 🟡 华妃阵营 | `#f38181` |
+
+---
 
 ## 🚀 快速启动
 
 ### 使用 Docker（推荐）
 
 ```bash
-# 启动项目
 docker-compose up
-
-# 访问
-http://localhost:4000
+# 访问 http://localhost:4000
 ```
 
 ### 本地开发
 
 ```bash
-# 安装依赖
 npm install
-
-# 启动开发服务器
 npm run dev
 ```
 
-## ✨ 功能特性
-
-- **左栏 EPUB 阅读器（70%）**：
-  - 直接读取《后宫·甄嬛传（修订典藏版）》EPUB 文件
-  - 自动提取目录，支持章节跳转
-  - 翻页导航（左右箭头键 / 按钮）
-  - 显示阅读进度（当前页/总页数）
-
-- **右栏动态关系图（30%）**：
-  - 使用 D3.js 可视化人物关系
-  - **核心功能：随阅读进度动态显示**
-    - 读到哪里，图谱就显示哪些人物
-    - 自动扫描文本中的人名，实时添加节点
-  - 阵营筛选：皇室成员、皇后阵营、甄嬛阵营、华妃阵营
-  - 缩放拖拽：支持图谱缩放和节点拖拽
-  - 悬浮提示：鼠标悬停显示角色详情
-  - 标签切换：显示/隐藏人名和关系标签
-  - 已发现人物计数器
+---
 
 ## 📂 项目结构
 
 ```
 .
-├── docker-compose.yml      # Docker 配置
-├── Dockerfile              # Docker 镜像
-├── package.json            # 项目依赖（添加了 epubjs）
-├── vite.config.js          # Vite 配置
-├── tailwind.config.js      # Tailwind CSS 配置
-├── index.html              # HTML 入口
+├── docker-compose.yml
+├── Dockerfile
+├── package.json
+├── vite.config.js
+├── tailwind.config.js
+├── index.html
 ├── public/
-│   └── 后宫·甄嬛传（修订典藏版）-流潋紫.epub  # EPUB 文件
+│   └── zhenhuan.epub
 └── src/
-    ├── main.jsx            # React 入口
-    ├── App.jsx             # 主应用（处理文本扫描和状态管理）
+    ├── main.jsx
+    ├── App.jsx                  # 主应用：文本扫描、状态管理、localStorage 持久化
     ├── components/
-    │   ├── ChapterReader.jsx        # EPUB 阅读器（使用 epub.js）
-    │   └── GraphVisualization.jsx   # 图谱可视化
+    │   ├── ChapterReader.jsx    # EPUB 阅读器（epub.js + 键盘导航 + 位置保存）
+    │   └── GraphVisualization.jsx  # D3.js 力导向图（增量更新）
     └── data/
-        └── graphData.js    # 人物关系数据（44个角色）
+        └── graphData.js         # 人物关系数据（44 个角色、26 条关系）
 ```
 
 ## 🎯 技术栈
 
-- **React 18** - UI 框架
-- **Vite 5** - 构建工具
-- **Tailwind CSS 3** - 样式框架
-- **D3.js 7** - 图谱可视化
-- **epub.js** - EPUB 阅读器库
-- **JSZip** - ZIP 解压（EPUB 依赖）
-- **Docker** - 容器化部署
-
-## 🧠 核心逻辑
-
-### 文本扫描与人物检测
-
-```javascript
-// 在 App.jsx 中
-const handleTextUpdate = (text) => {
-  // 扫描当前页文本，匹配人物名字
-  const chars = new Set()
-  graphData.nodes.forEach(node => {
-    if (text.includes(node.Label)) {
-      chars.add(node.Label)
-    }
-  })
-  setReadCharacters(prev => new Set([...prev, ...chars]))
-}
-```
-
-### 动态图谱渲染
-
-```javascript
-// 在 GraphVisualization.jsx 中
-const visibleNodes = graphData.nodes.filter(node =>
-  readCharacters.has(node.Label)  // 只显示已读到的人物
-)
-```
-
-## 📝 数据说明
-
-- **graphData.js**：包含44个主要人物及其关系
-  - 每个节点包含：Label（名字）、Alliance（阵营）、Title（职位）
-  - 边包含：source、target、Relationship（关系类型）
-- **EPUB 文件**：完整的《甄嬛传》电子书
-  - 自动提取章节和文本
-  - 实时扫描人物名字
-
-## 🎨 阵营配色
-
-- 🔴 皇室成员：#ff6b6b
-- 🔵 皇后阵营：#4ecdc4
-- 🟢 甄嬛阵营：#95e1d3
-- 🟡 华妃阵营：#f38181
-
-## ⚡ 性能
-
-- 离线运行，无需外部依赖
-- 页面加载时间约 3秒
-- EPUB 解析和渲染由 epub.js 优化处理
-- 图谱渲染使用 D3.js force simulation
+- **React 18** — UI 框架
+- **Vite 5** — 构建工具
+- **Tailwind CSS 3** — 样式
+- **D3.js 7** — 力导向图可视化
+- **epub.js** — EPUB 解析渲染
+- **Docker** — 容器化部署
 
 ## 🔧 环境要求
 
 - Node.js 18+
 - Docker（可选）
-- 现代浏览器（支持 ES6+）
+- 现代浏览器（Chrome / Edge / Firefox / Safari）
 
 ## 📄 License
 
