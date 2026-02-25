@@ -184,13 +184,6 @@ export default function ChapterReader({
     })
   }, [themeConfig, fontFamily, fontSize])
 
-  // Notify parent of TOC chapter changes for dynamic graph
-  useEffect(() => {
-    if (onTocChapterChange && toc.length > 0 && currentChapterIdx >= 0) {
-      onTocChapterChange(currentChapterIdx, toc.length)
-    }
-  }, [currentChapterIdx, toc.length, onTocChapterChange])
-
   const goToChapter = (href) => {
     if (renditionRef.current) {
       renditionRef.current.display(href)
@@ -208,6 +201,13 @@ export default function ChapterReader({
   const currentChapterLabel = currentChapterIdx >= 0
     ? toc[currentChapterIdx].label?.trim()
     : null
+
+  // Notify parent of TOC chapter changes for dynamic graph
+  useEffect(() => {
+    if (onTocChapterChange && toc.length > 0 && currentChapterIdx >= 0) {
+      onTocChapterChange(currentChapterIdx, toc.length)
+    }
+  }, [currentChapterIdx, toc.length, onTocChapterChange])
 
   // Shared select style
   const selectStyle = {
