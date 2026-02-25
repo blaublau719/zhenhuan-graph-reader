@@ -7,6 +7,12 @@ const STORAGE_KEY_CHARS = 'zhenhuan-read-characters'
 const STORAGE_KEY_CHAPTER = 'zhenhuan-current-chapter'
 const STORAGE_KEY_THEME = 'zhenhuan-theme'
 const STORAGE_KEY_FONT = 'zhenhuan-font'
+const STORAGE_KEY_FONTSIZE = 'zhenhuan-fontsize'
+
+const FONT_SIZE_MIN = 12
+const FONT_SIZE_MAX = 28
+const FONT_SIZE_STEP = 2
+const FONT_SIZE_DEFAULT = 18
 
 const FONT_OPTIONS = [
   { label: '宋体', value: '"SimSun", "Songti SC", "Noto Serif SC", serif' },
@@ -17,10 +23,10 @@ const FONT_OPTIONS = [
 
 const THEMES = {
   light: {
-    name: '☀️ 浅色',
-    headerBg: '#92400e',       // amber-800
-    headerBtnBg: '#b45309',    // amber-700
-    headerBtnHover: '#d97706', // amber-600
+    name: '☀️ 浅色模式',
+    headerBg: '#92400e',
+    headerBtnBg: '#b45309',
+    headerBtnHover: '#d97706',
     readerBg: '#dfc792',
     textColor: '#28390b',
     tocBg: '#f3f4f6',
@@ -42,9 +48,11 @@ const THEMES = {
     linkLabelFill: '#666',
     tooltipBg: 'rgba(0,0,0,0.9)',
     tooltipText: '#fff',
+    selectBg: '#ffffff',
+    selectText: '#1f2937',
   },
-  dark: {
-    name: '🌙 深色',
+  green: {
+    name: '🌿 绿色模式',
     headerBg: '#7c9b18',
     headerBtnBg: '#6b8a10',
     headerBtnHover: '#8aaf1e',
@@ -69,8 +77,41 @@ const THEMES = {
     linkLabelFill: '#d1d5db',
     tooltipBg: 'rgba(30,40,10,0.95)',
     tooltipText: '#fff',
+    selectBg: '#4a5c1a',
+    selectText: '#e5e7eb',
+  },
+  dark: {
+    name: '🌙 深色模式',
+    headerBg: '#303823',
+    headerBtnBg: '#3e4830',
+    headerBtnHover: '#4a5638',
+    readerBg: '#505d3a',
+    textColor: '#ffffff',
+    tocBg: '#3a4530',
+    tocBorder: '#5a6648',
+    tocText: '#e5e7eb',
+    tocBtnBg: '#4a5638',
+    tocBtnBorder: '#5a6648',
+    tocBtnHoverBg: '#5a6648',
+    loadingText: '#d1d5db',
+    appBg: 'linear-gradient(135deg, #505d3a, #3a4530)',
+    borderColor: '#5a6648',
+    graphBg: '#3a555d',
+    panelBg: 'rgba(48,56,35,0.95)',
+    panelText: '#e5e7eb',
+    panelBorder: '#5a6648',
+    legendText: '#d1d5db',
+    nodeLabelFill: '#f3f4f6',
+    nodeLabelShadow: '1px 1px 2px rgba(0,0,0,0.6)',
+    linkLabelFill: '#d1d5db',
+    tooltipBg: 'rgba(48,56,35,0.95)',
+    tooltipText: '#fff',
+    selectBg: '#4a5638',
+    selectText: '#e5e7eb',
   }
 }
+
+const THEME_KEYS = Object.keys(THEMES)
 
 function App() {
   const [currentChapter, setCurrentChapter] = useState(() => {
@@ -91,15 +132,24 @@ function App() {
 
   const [theme, setTheme] = useState(() => {
     try {
-      return localStorage.getItem(STORAGE_KEY_THEME) || 'light'
+      const saved = localStorage.getItem(STORAGE_KEY_THEME)
+      return saved && THEMES[saved] ? saved : 'light'
     } catch { return 'light' }
   })
 
   const [fontIndex, setFontIndex] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_FONT)
-      return saved ? Number(saved) : 0
+      const idx = Number(saved)
+      return idx >= 0 && idx < FONT_OPTIONS.length ? idx : 0
     } catch { return 0 }
+  })
+
+  const [fontSize, setFontSize] = useState(() => {
+    try {
+      const saved = Number(localStorage.getItem(STORAGE_KEY_FONTSIZE))
+      return saved >= FONT_SIZE_MIN && saved <= FONT_SIZE_MAX ? saved : FONT_SIZE_DEFAULT
+    } catch { return FONT_SIZE_DEFAULT }
   })
 
   const epubUrl = `${import.meta.env.BASE_URL}zhenhuan.epub`
@@ -123,6 +173,18 @@ function App() {
     try { localStorage.setItem(STORAGE_KEY_FONT, String(fontIndex)) } catch {}
   }, [fontIndex])
 
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY_FONTSIZE, String(fontSize)) } catch {}
+  }, [fontSize])
+
+  const increaseFontSize = useCallback(() => {
+    setFontSize(prev => Math.min(prev + FONT_SIZE_STEP, FONT_SIZE_MAX))
+  }, [])
+
+  const decreaseFontSize = useCallback(() => {
+    setFontSize(prev => Math.max(prev - FONT_SIZE_STEP, FONT_SIZE_MIN))
+  }, [])
+
   const handleChapterChange = useCallback((chapterNum) => {
     setCurrentChapter(chapterNum)
   }, [])
@@ -142,14 +204,6 @@ function App() {
     })
   }, [])
 
-  const toggleTheme = useCallback(() => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light')
-  }, [])
-
-  const cycleFont = useCallback(() => {
-    setFontIndex(prev => (prev + 1) % FONT_OPTIONS.length)
-  }, [])
-
   return (
     <div className="flex h-screen" style={{ background: themeConfig.appBg }}>
       <div
@@ -162,9 +216,16 @@ function App() {
           onTextUpdate={handleTextUpdate}
           themeConfig={themeConfig}
           fontFamily={currentFont.value}
-          fontLabel={currentFont.label}
-          onToggleTheme={toggleTheme}
-          onCycleFont={cycleFont}
+          fontSize={fontSize}
+          onIncreaseFontSize={increaseFontSize}
+          onDecreaseFontSize={decreaseFontSize}
+          fontOptions={FONT_OPTIONS}
+          fontIndex={fontIndex}
+          onFontChange={setFontIndex}
+          themeKeys={THEME_KEYS}
+          themes={THEMES}
+          theme={theme}
+          onThemeChange={setTheme}
         />
       </div>
       <div className="w-[30%] h-full">

@@ -9,9 +9,16 @@ export default function ChapterReader({
   onTextUpdate,
   themeConfig,
   fontFamily,
-  fontLabel,
-  onToggleTheme,
-  onCycleFont,
+  fontSize,
+  onIncreaseFontSize,
+  onDecreaseFontSize,
+  fontOptions,
+  fontIndex,
+  onFontChange,
+  themeKeys,
+  themes,
+  theme,
+  onThemeChange,
 }) {
   const viewerRef = useRef(null)
   const renditionRef = useRef(null)
@@ -19,6 +26,8 @@ export default function ChapterReader({
   const [totalPages, setTotalPages] = useState(0)
   const [toc, setToc] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [currentChapterHref, setCurrentChapterHref] = useState(null)
+  const [overallProgress, setOverallProgress] = useState(0)
 
   // Initialize epub once
   useEffect(() => {
@@ -40,12 +49,14 @@ export default function ChapterReader({
         color: `${themeConfig.textColor} !important`,
         'font-family': `${fontFamily} !important`,
         'font-weight': '500 !important',
+        'font-size': `${fontSize}px !important`,
         'background-color': `${themeConfig.readerBg} !important`,
       },
       'p, div, span, h1, h2, h3, h4, h5, h6, li, a': {
         color: `${themeConfig.textColor} !important`,
         'font-family': `${fontFamily} !important`,
         'font-weight': '500 !important',
+        'font-size': `${fontSize}px !important`,
       }
     })
 
@@ -73,8 +84,14 @@ export default function ChapterReader({
       setTotalPages(location.start.displayed.total)
 
       const progress = location.start.percentage
+      setOverallProgress(Math.round(progress * 100))
       const estimatedChapter = Math.max(1, Math.min(5, Math.ceil(progress * 5)))
       onChapterChange(estimatedChapter)
+
+      // Track current chapter href for TOC highlighting
+      if (location.start.href) {
+        setCurrentChapterHref(location.start.href)
+      }
 
       try {
         if (location.start.cfi) {
@@ -101,7 +118,7 @@ export default function ChapterReader({
     }
   }, [epubUrl])
 
-  // Update epub theme when themeConfig or fontFamily changes (without re-creating rendition)
+  // Update epub theme when themeConfig, fontFamily, or fontSize changes
   useEffect(() => {
     const r = renditionRef.current
     if (!r) return
@@ -111,12 +128,14 @@ export default function ChapterReader({
         color: `${themeConfig.textColor} !important`,
         'font-family': `${fontFamily} !important`,
         'font-weight': '500 !important',
+        'font-size': `${fontSize}px !important`,
         'background-color': `${themeConfig.readerBg} !important`,
       },
       'p, div, span, h1, h2, h3, h4, h5, h6, li, a': {
         color: `${themeConfig.textColor} !important`,
         'font-family': `${fontFamily} !important`,
         'font-weight': '500 !important',
+        'font-size': `${fontSize}px !important`,
       }
     })
 
@@ -127,16 +146,18 @@ export default function ChapterReader({
         body.style.color = themeConfig.textColor
         body.style.fontFamily = fontFamily
         body.style.fontWeight = '500'
+        body.style.fontSize = `${fontSize}px`
         body.style.backgroundColor = themeConfig.readerBg
 
         body.querySelectorAll('p, div, span, h1, h2, h3, h4, h5, h6, li, a').forEach(el => {
           el.style.color = themeConfig.textColor
           el.style.fontFamily = fontFamily
           el.style.fontWeight = '500'
+          el.style.fontSize = `${fontSize}px`
         })
       }
     })
-  }, [themeConfig, fontFamily])
+  }, [themeConfig, fontFamily, fontSize])
 
   const goToChapter = (href) => {
     if (renditionRef.current) {
@@ -147,36 +168,71 @@ export default function ChapterReader({
   const nextPage = () => renditionRef.current?.next()
   const prevPage = () => renditionRef.current?.prev()
 
+  // Derive current chapter label from TOC
+  const currentChapterLabel = toc.find(ch =>
+    currentChapterHref && ch.href && currentChapterHref.includes(ch.href)
+  )?.label?.trim() || null
+
+  // Shared select style
+  const selectStyle = {
+    background: themeConfig.selectBg,
+    color: themeConfig.selectText,
+    border: `1px solid ${themeConfig.headerBtnBg}`,
+  }
+
   return (
     <div className="relative h-full" style={{ background: themeConfig.readerBg }}>
       {/* Header with controls */}
       <div
-        className="absolute top-0 left-0 right-0 text-white p-3 z-10 shadow-lg"
+        className="absolute top-0 left-0 right-0 text-white p-2 z-10 shadow-lg"
         style={{ background: themeConfig.headerBg }}
       >
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
-          <h1 className="text-xl font-bold whitespace-nowrap">甄嬛传</h1>
+        <div className="flex items-center justify-between gap-2 px-3">
+          <h1 className="text-lg font-bold whitespace-nowrap">甄嬛传</h1>
 
           <div className="flex items-center gap-2 flex-wrap justify-end">
-            {/* Theme toggle */}
-            <button
-              onClick={onToggleTheme}
-              className="px-2 py-1 rounded transition text-sm"
-              style={{ background: themeConfig.headerBtnBg }}
-              title="切换主题"
+            {/* Theme dropdown */}
+            <select
+              value={theme}
+              onChange={(e) => onThemeChange(e.target.value)}
+              className="px-2 py-1 rounded text-xs cursor-pointer"
+              style={selectStyle}
             >
-              {themeConfig.name}
-            </button>
+              {themeKeys.map(key => (
+                <option key={key} value={key}>{themes[key].name}</option>
+              ))}
+            </select>
 
-            {/* Font selector */}
-            <button
-              onClick={onCycleFont}
-              className="px-2 py-1 rounded transition text-sm"
-              style={{ background: themeConfig.headerBtnBg }}
-              title="切换字体"
+            {/* Font dropdown */}
+            <select
+              value={fontIndex}
+              onChange={(e) => onFontChange(Number(e.target.value))}
+              className="px-2 py-1 rounded text-xs cursor-pointer"
+              style={selectStyle}
             >
-              字 {fontLabel}
-            </button>
+              {fontOptions.map((f, i) => (
+                <option key={i} value={i}>字体: {f.label}</option>
+              ))}
+            </select>
+
+            {/* Font size controls: - 字体 + */}
+            <span className="flex items-center rounded overflow-hidden" style={{ background: themeConfig.headerBtnBg }}>
+              <button
+                onClick={onDecreaseFontSize}
+                className="px-2 py-1 text-sm hover:opacity-80 transition"
+                title="缩小字体"
+              >
+                −
+              </button>
+              <span className="px-1 py-1 text-xs opacity-90">字号</span>
+              <button
+                onClick={onIncreaseFontSize}
+                className="px-2 py-1 text-sm hover:opacity-80 transition"
+                title="放大字体"
+              >
+                +
+              </button>
+            </span>
 
             <span className="text-xs opacity-80">
               {currentPage}/{totalPages}
@@ -187,14 +243,14 @@ export default function ChapterReader({
               className="px-2 py-1 rounded transition text-sm"
               style={{ background: themeConfig.headerBtnBg }}
             >
-              ← 上一页
+              ←
             </button>
             <button
               onClick={nextPage}
               className="px-2 py-1 rounded transition text-sm"
               style={{ background: themeConfig.headerBtnBg }}
             >
-              下一页 →
+              →
             </button>
           </div>
         </div>
@@ -203,7 +259,7 @@ export default function ChapterReader({
       {/* EPUB viewer */}
       <div
         ref={viewerRef}
-        className="absolute top-14 left-0 right-0 bottom-16 overflow-hidden"
+        className="absolute top-12 left-0 right-0 bottom-12 overflow-hidden"
         style={{
           padding: '20px',
           background: themeConfig.readerBg,
@@ -219,28 +275,44 @@ export default function ChapterReader({
             borderTop: `1px solid ${themeConfig.tocBorder}`,
           }}
         >
-          <details className="max-w-3xl mx-auto">
+          <details className="w-full">
             <summary
-              className="cursor-pointer p-3 font-semibold text-sm"
+              className="cursor-pointer px-4 py-2 text-sm flex items-center justify-between"
               style={{ color: themeConfig.tocText }}
             >
-              📑 目录 ({toc.length} 章节)
+              <span className="font-semibold truncate" style={{ maxWidth: '70%' }}>
+                📑 {currentChapterLabel || '目录'}
+              </span>
+              <span className="text-xs opacity-70 whitespace-nowrap ml-2">
+                {toc.length} 章 · {overallProgress}%
+              </span>
             </summary>
-            <div className="max-h-48 overflow-y-auto p-3 grid grid-cols-2 md:grid-cols-3 gap-2">
-              {toc.map((chapter, index) => (
-                <button
-                  key={index}
-                  onClick={() => goToChapter(chapter.href)}
-                  className="text-left px-3 py-2 text-sm rounded transition"
-                  style={{
-                    background: themeConfig.tocBtnBg,
-                    border: `1px solid ${themeConfig.tocBtnBorder}`,
-                    color: themeConfig.tocText,
-                  }}
-                >
-                  {chapter.label}
-                </button>
-              ))}
+            <div
+              className="overflow-y-auto px-2 pb-2 grid gap-1"
+              style={{
+                maxHeight: '50vh',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+              }}
+            >
+              {toc.map((chapter, index) => {
+                const isActive = currentChapterHref && chapter.href &&
+                  currentChapterHref.includes(chapter.href)
+                return (
+                  <button
+                    key={index}
+                    onClick={() => goToChapter(chapter.href)}
+                    className="text-left px-3 py-2 text-sm rounded transition w-full"
+                    style={{
+                      background: isActive ? themeConfig.headerBg : themeConfig.tocBtnBg,
+                      border: `1px solid ${isActive ? themeConfig.headerBg : themeConfig.tocBtnBorder}`,
+                      color: isActive ? '#fff' : themeConfig.tocText,
+                      fontWeight: isActive ? '600' : '400',
+                    }}
+                  >
+                    {chapter.label}
+                  </button>
+                )
+              })}
             </div>
           </details>
         </div>
