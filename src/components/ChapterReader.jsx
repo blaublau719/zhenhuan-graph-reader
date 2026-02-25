@@ -168,10 +168,13 @@ export default function ChapterReader({
   const nextPage = () => renditionRef.current?.next()
   const prevPage = () => renditionRef.current?.prev()
 
-  // Derive current chapter label from TOC
-  const currentChapterLabel = toc.find(ch =>
+  // Derive current chapter label and index from TOC
+  const currentChapterIdx = toc.findIndex(ch =>
     currentChapterHref && ch.href && currentChapterHref.includes(ch.href)
-  )?.label?.trim() || null
+  )
+  const currentChapterLabel = currentChapterIdx >= 0
+    ? toc[currentChapterIdx].label?.trim()
+    : null
 
   // Shared select style
   const selectStyle = {
@@ -277,14 +280,20 @@ export default function ChapterReader({
         >
           <details className="w-full">
             <summary
-              className="cursor-pointer px-4 py-2 text-sm flex items-center justify-between"
-              style={{ color: themeConfig.tocText }}
+              className="cursor-pointer px-4 py-2 text-sm grid items-center"
+              style={{
+                color: themeConfig.tocText,
+                gridTemplateColumns: '1fr auto 1fr',
+              }}
             >
-              <span className="font-semibold truncate" style={{ maxWidth: '70%' }}>
+              <span className="font-semibold truncate">
                 📑 {currentChapterLabel || '目录'}
               </span>
-              <span className="text-xs opacity-70 whitespace-nowrap ml-2">
-                {toc.length} 章 · {overallProgress}%
+              <span className="text-xs font-medium whitespace-nowrap">
+                {currentChapterIdx >= 0 ? currentChapterIdx + 1 : '–'}/{toc.length}
+              </span>
+              <span className="text-xs opacity-70 whitespace-nowrap text-right">
+                共{toc.length}章 · 进度{overallProgress}%
               </span>
             </summary>
             <div
