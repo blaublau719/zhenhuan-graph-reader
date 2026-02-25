@@ -12,6 +12,7 @@ const hrefBasename = (href) => {
 export default function ChapterReader({
   epubUrl,
   onChapterChange,
+  onTocChapterChange,
   onTextUpdate,
   themeConfig,
   fontFamily,
@@ -182,6 +183,13 @@ export default function ChapterReader({
       }
     })
   }, [themeConfig, fontFamily, fontSize])
+
+  // Notify parent of TOC chapter changes for dynamic graph
+  useEffect(() => {
+    if (onTocChapterChange && toc.length > 0 && currentChapterIdx >= 0) {
+      onTocChapterChange(currentChapterIdx, toc.length)
+    }
+  }, [currentChapterIdx, toc.length, onTocChapterChange])
 
   const goToChapter = (href) => {
     if (renditionRef.current) {

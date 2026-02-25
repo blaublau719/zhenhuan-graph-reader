@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import * as d3 from 'd3'
 
-export default function GraphVisualization({ graphData, currentChapter, readCharacters, detectedCharacters, themeConfig }) {
+export default function GraphVisualization({ graphData, currentChapter, eventChapter, currentEvents, readCharacters, detectedCharacters, themeConfig }) {
   const svgRef = useRef(null)
   const [selectedAlliance, setSelectedAlliance] = useState('all')
   const [showLabels, setShowLabels] = useState(true)
+  const [showEventLog, setShowEventLog] = useState(true)
 
   // Persistent refs for incremental updates
   const simulationRef = useRef(null)
@@ -141,10 +142,10 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
       .attr('font-size', '10px')
       .attr('text-anchor', 'middle')
       .attr('pointer-events', 'none')
-      .text(d => d.Relationship)
 
     const linkLabel = linkLabelEnter.merge(linkLabelSel)
     linkLabel
+      .text(d => d.Relationship)
       .attr('fill', themeConfig.linkLabelFill)
       .style('opacity', showLabels ? 1 : 0)
 
@@ -279,10 +280,11 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
 
   const showTooltip = (event, d) => {
     const tooltip = d3.select('#tooltip')
+    const titleDisplay = d.Title || '未知'
     tooltip.style('display', 'block')
       .html(`
         <div class="font-bold text-yellow-400 text-lg mb-2">${d.Label}</div>
-        <div class="mb-1"><span class="font-semibold">职位：</span>${d.Title}</div>
+        <div class="mb-1"><span class="font-semibold">职位：</span>${titleDisplay}</div>
         <div class="mb-1"><span class="font-semibold">阵营：</span>${d.Alliance}</div>
         <div class="mb-1"><span class="font-semibold">登场：</span>第${d.appearChapter}章</div>
       `)
@@ -348,14 +350,60 @@ export default function GraphVisualization({ graphData, currentChapter, readChar
         </button>
 
         <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${themeConfig.panelBorder}` }}>
+          {eventChapter > 0 && (
+            <div className="text-sm mb-1" style={{ color: themeConfig.legendText }}>
+              剧情进度：<span className="font-bold" style={{ color: themeConfig.headerBg }}>第{eventChapter}卷</span>
+            </div>
+          )}
           <div className="text-sm mb-1" style={{ color: themeConfig.legendText }}>
-            当前章节：<span className="font-bold" style={{ color: themeConfig.headerBg }}>第{currentChapter}章</span>
-          </div>
-          <div className="text-sm" style={{ color: themeConfig.legendText }}>
             已发现人物：<span className="font-bold text-green-600">{readCharacters.size}</span> / {graphData.nodes.length}
           </div>
         </div>
+
+        <button
+          onClick={() => setShowEventLog(!showEventLog)}
+          className="w-full mt-2 px-4 py-2 text-white rounded transition text-sm"
+          style={{ background: themeConfig.headerBg }}
+        >
+          {showEventLog ? '隐藏剧情' : '显示剧情'}
+        </button>
       </div>
+
+      {/* Event Log Panel */}
+      {showEventLog && currentEvents && currentEvents.length > 0 && (
+        <div
+          className="absolute top-5 right-5 p-4 rounded-lg shadow-lg z-10 overflow-y-auto"
+          style={{
+            background: themeConfig.panelBg,
+            color: themeConfig.panelText,
+            maxHeight: '40vh',
+            minWidth: '180px',
+            maxWidth: '240px',
+          }}
+        >
+          <h4 className="text-sm font-bold mb-2" style={{ color: themeConfig.legendText }}>
+            📜 第{eventChapter}卷 剧情事件
+          </h4>
+          {currentEvents.map((evt, i) => (
+            <div
+              key={i}
+              className="text-xs mb-2 p-2 rounded"
+              style={{
+                background: evt.type === 'status_change'
+                  ? 'rgba(251,191,36,0.15)'
+                  : 'rgba(78,205,196,0.15)',
+                borderLeft: `3px solid ${evt.type === 'status_change' ? '#fbbf24' : '#4ecdc4'}`,
+              }}
+            >
+              {evt.type === 'status_change' ? (
+                <span>👑 <b>{evt.character}</b> → {evt.title}</span>
+              ) : (
+                <span>🤝 <b>{evt.characters.join(' & ')}</b>：{evt.relationship}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Legend */}
       <div

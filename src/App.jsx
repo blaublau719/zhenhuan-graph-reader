@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import ChapterReader from './components/ChapterReader'
 import GraphVisualization from './components/GraphVisualization'
 import { graphData } from './data/graphData'
+import { computeGraphState, tocIndexToEventChapter } from './data/chapterEvents'
 
 const STORAGE_KEY_CHARS = 'zhenhuan-read-characters'
 const STORAGE_KEY_CHAPTER = 'zhenhuan-current-chapter'
@@ -152,9 +153,22 @@ function App() {
     } catch { return FONT_SIZE_DEFAULT }
   })
 
+  const [tocChapterIdx, setTocChapterIdx] = useState(-1)
+  const [totalTocChapters, setTotalTocChapters] = useState(0)
+
   const epubUrl = `${import.meta.env.BASE_URL}zhenhuan.epub`
   const themeConfig = THEMES[theme]
   const currentFont = FONT_OPTIONS[fontIndex]
+
+  // Compute event chapter from TOC index and derive dynamic graph state
+  const eventChapter = totalTocChapters > 0 && tocChapterIdx >= 0
+    ? tocIndexToEventChapter(tocChapterIdx, totalTocChapters)
+    : 0
+
+  const dynamicGraph = useMemo(() => {
+    if (eventChapter <= 0) return { nodes: graphData.nodes, edges: graphData.edges, currentEvents: [] }
+    return computeGraphState(graphData, eventChapter)
+  }, [eventChapter])
 
   // Persist state
   useEffect(() => {
@@ -189,6 +203,11 @@ function App() {
     setCurrentChapter(chapterNum)
   }, [])
 
+  const handleTocChapterChange = useCallback((idx, total) => {
+    setTocChapterIdx(idx)
+    setTotalTocChapters(total)
+  }, [])
+
   const handleTextUpdate = useCallback((text) => {
     const chars = new Set()
     graphData.nodes.forEach(node => {
@@ -213,6 +232,7 @@ function App() {
         <ChapterReader
           epubUrl={epubUrl}
           onChapterChange={handleChapterChange}
+          onTocChapterChange={handleTocChapterChange}
           onTextUpdate={handleTextUpdate}
           themeConfig={themeConfig}
           fontFamily={currentFont.value}
@@ -230,8 +250,10 @@ function App() {
       </div>
       <div className="w-[30%] h-full">
         <GraphVisualization
-          graphData={graphData}
+          graphData={dynamicGraph}
           currentChapter={currentChapter}
+          eventChapter={eventChapter}
+          currentEvents={dynamicGraph.currentEvents}
           readCharacters={readCharacters}
           detectedCharacters={detectedCharacters}
           themeConfig={themeConfig}
