@@ -44,7 +44,8 @@ export const graphData = {
     { "Label": "年羹尧", "ID": 42, "Alliance": "华妃阵营", "Title": "抚远大将军", "initialTitle": "抚远大将军", "appearChapter": 1 },
     { "Label": "静和公主", "ID": 43, "Alliance": "甄嬛阵营", "Title": "静和公主", "initialTitle": "静和公主", "appearChapter": 5 },
     { "Label": "颂芝", "ID": 44, "Alliance": "华妃阵营", "Title": "从七品选侍", "initialTitle": "华妃侍女", "appearChapter": 2 },
-    { "Label": "流朱", "ID": 45, "Alliance": "甄嬛阵营", "Title": "甄嬛贴身侍女", "initialTitle": "甄嬛贴身侍女", "appearChapter": 1 }
+    { "Label": "流朱", "ID": 45, "Alliance": "甄嬛阵营", "Title": "甄嬛贴身侍女", "initialTitle": "甄嬛贴身侍女", "appearChapter": 1 },
+    { "Label": "黄规全", "ID": 46, "Alliance": "甄嬛阵营", "Title": "碎玉轩太监", "initialTitle": "碎玉轩太监", "appearChapter": 1 }
   ],
   "edges": [
     { "source": 1, "target": 2, "Relationship": "妻子" },
@@ -67,13 +68,17 @@ export const graphData = {
     { "source": 7, "target": 36, "Relationship": "心腹" },
     { "source": 7, "target": 35, "Relationship": "妹妹" },
     { "source": 7, "target": 41, "Relationship": "父亲" },
+    { "source": 7, "target": 40, "Relationship": "心腹" },
+    { "source": 7, "target": 46, "Relationship": "心腹" },
+    { "source": 7, "target": 45, "Relationship": "心腹" },
     { "source": 8, "target": 37, "Relationship": "地下情" },
+    { "source": 14, "target": 15, "Relationship": "表面同盟" },
     { "source": 15, "target": 16, "Relationship": "同盟" },
     { "source": 15, "target": 38, "Relationship": "心腹" },
     { "source": 15, "target": 42, "Relationship": "哥哥" },
     { "source": 15, "target": 44, "Relationship": "心腹" },
     { "source": 18, "target": 19, "Relationship": "妻子" },
     { "source": 36, "target": 39, "Relationship": "偷吃" },
-    { "source": 7, "target": 45, "Relationship": "心腹" }
+    { "source": 40, "target": 46, "Relationship": "兄弟" }
   ]
 };
