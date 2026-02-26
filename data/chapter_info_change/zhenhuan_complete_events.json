@@ -1,0 +1,473 @@
+[
+  {
+    "id": 1,
+    "volume": 1,
+    "chapter": 1,
+    "event": "甄嬛选秀入宫",
+    "type": "status_change",
+    "character": "甄嬛",
+    "title": "秀女"
+  },
+  {
+    "id": 2,
+    "volume": 1,
+    "chapter": 1,
+    "event": "沈眉庄选秀入宫",
+    "type": "status_change",
+    "character": "沈眉庄",
+    "title": "秀女"
+  },
+  {
+    "id": 3,
+    "volume": 1,
+    "chapter": 1,
+    "event": "安陵容选秀入宫",
+    "type": "status_change",
+    "character": "安陵容",
+    "title": "秀女"
+  },
+  {
+    "id": 4,
+    "volume": 1,
+    "chapter": 1,
+    "event": "甄嬛帮助安陵容对抗夏冬春",
+    "type": "relationship",
+    "characters": [
+      "甄嬛",
+      "安陵容"
+    ],
+    "relationship": "结盟"
+  },
+  {
+    "id": 5,
+    "volume": 1,
+    "chapter": 1,
+    "event": "皇帝选中甄嬛",
+    "type": "relationship",
+    "characters": [
+      "甄嬛",
+      "玄凌"
+    ],
+    "relationship": "初见"
+  },
+  {
+    "id": 6,
+    "volume": 1,
+    "chapter": 2,
+    "event": "甄嬛册封莞贵人",
+    "type": "status_change",
+    "character": "甄嬛",
+    "title": "莞贵人（正六品）"
+  },
+  {
+    "id": 7,
+    "volume": 1,
+    "chapter": 2,
+    "event": "沈眉庄册封小仪",
+    "type": "status_change",
+    "character": "沈眉庄",
+    "title": "沈小仪（从五品）"
+  },
+  {
+    "id": 8,
+    "volume": 1,
+    "chapter": 2,
+    "event": "安陵容册封选侍",
+    "type": "status_change",
+    "character": "安陵容",
+    "title": "安选侍（从七品）"
+  },
+  {
+    "id": 9,
+    "volume": 1,
+    "chapter": 3,
+    "event": "华妃厚赏新进宫嫔",
+    "type": "relationship",
+    "characters": [
+      "华妃",
+      "甄嬛"
+    ],
+    "relationship": "试探"
+  },
+  {
+    "id": 10,
+    "volume": 1,
+    "chapter": 3,
+    "event": "参见皇后与后宫妃嫔",
+    "type": "relationship",
+    "characters": [
+      "甄嬛",
+      "皇后"
+    ],
+    "relationship": "初见"
+  },
+  {
+    "id": 11,
+    "volume": 1,
+    "chapter": 4,
+    "event": "甄嬛连续七夜受宠",
+    "type": "relationship",
+    "characters": [
+      "甄嬛",
+      "玄凌"
+    ],
+    "relationship": "恩宠"
+  },
+  {
+    "id": 12,
+    "volume": 1,
+    "chapter": 5,
+    "event": "甄嬛晋封莞嫔",
+    "type": "status_change",
+    "character": "甄嬛",
+    "title": "莞嫔（正五品）"
+  },
+  {
+    "id": 13,
+    "volume": 1,
+    "chapter": 5,
+    "event": "华妃开始嫉妒甄嬛",
+    "type": "relationship",
+    "characters": [
+      "华妃",
+      "甄嬛"
+    ],
+    "relationship": "敌对"
+  },
+  {
+    "id": 14,
+    "volume": 2,
+    "chapter": 6,
+    "event": "华妃陷害甄嬛",
+    "type": "relationship",
+    "characters": [
+      "华妃",
+      "甄嬛"
+    ],
+    "relationship": "陷害"
+  },
+  {
+    "id": 15,
+    "volume": 2,
+    "chapter": 7,
+    "event": "沈眉庄晋封惠嫔",
+    "type": "status_change",
+    "character": "沈眉庄",
+    "title": "惠嫔（正四品）"
+  },
+  {
+    "id": 16,
+    "volume": 2,
+    "chapter": 8,
+    "event": "安陵容晋封鹂妃",
+    "type": "status_change",
+    "character": "安陵容",
+    "title": "鹂妃（正三品）"
+  },
+  {
+    "id": 17,
+    "volume": 2,
+    "chapter": 9,
+    "event": "甄嬛怀孕有喜",
+    "type": "status_change",
+    "character": "甄嬛",
+    "title": "莞嫔（怀孕）"
+  },
+  {
+    "id": 18,
+    "volume": 2,
+    "chapter": 10,
+    "event": "华妃害甄嬛小产",
+    "type": "relationship",
+    "characters": [
+      "华妃",
+      "甄嬛"
+    ],
+    "relationship": "仇恨"
+  },
+  {
+    "id": 19,
+    "volume": 3,
+    "chapter": 11,
+    "event": "甄嬛自请出宫去甘露寺",
+    "type": "status_change",
+    "character": "甄嬛",
+    "title": "莞嫔（出宫）"
+  },
+  {
+    "id": 20,
+    "volume": 3,
+    "chapter": 12,
+    "event": "甄嬛遇果郡王",
+    "type": "relationship",
+    "characters": [
+      "甄嬛",
+      "果郡王"
+    ],
+    "relationship": "相识"
+  },
+  {
+    "id": 21,
+    "volume": 3,
+    "chapter": 13,
+    "event": "甄嬛与果郡王相恋",
+    "type": "relationship",
+    "characters": [
+      "甄嬛",
+      "果郡王"
+    ],
+    "relationship": "恋情"
+  },
+  {
+    "id": 22,
+    "volume": 3,
+    "chapter": 14,
+    "event": "安陵容背叛甄嬛",
+    "type": "relationship",
+    "characters": [
+      "安陵容",
+      "甄嬛"
+    ],
+    "relationship": "反目"
+  },
+  {
+    "id": 23,
+    "volume": 3,
+    "chapter": 15,
+    "event": "安陵容投靠皇后",
+    "type": "relationship",
+    "characters": [
+      "安陵容",
+      "皇后"
+    ],
+    "relationship": "结盟"
+  },
+  {
+    "id": 24,
+    "volume": 4,
+    "chapter": 16,
+    "event": "甄嬛以钮祜禄氏身份回宫",
+    "type": "status_change",
+    "character": "甄嬛",
+    "title": "熹妃（正三品）"
+  },
+  {
+    "id": 25,
+    "volume": 4,
+    "chapter": 17,
+    "event": "甄嬛怀有龙胎",
+    "type": "status_change",
+    "character": "甄嬛",
+    "title": "熹妃（有喜）"
+  },
+  {
+    "id": 26,
+    "volume": 4,
+    "chapter": 18,
+    "event": "沈眉庄怀孕",
+    "type": "status_change",
+    "character": "沈眉庄",
+    "title": "惠嫔（有喜）"
+  },
+  {
+    "id": 27,
+    "volume": 4,
+    "chapter": 19,
+    "event": "华妃被揭露不孕真相",
+    "type": "relationship",
+    "characters": [
+      "华妃",
+      "皇后"
+    ],
+    "relationship": "揭露"
+  },
+  {
+    "id": 28,
+    "volume": 4,
+    "chapter": 20,
+    "event": "华妃被赐死",
+    "type": "status_change",
+    "character": "华妃",
+    "title": "华妃（身亡）"
+  },
+  {
+    "id": 29,
+    "volume": 5,
+    "chapter": 21,
+    "event": "甄嬛诞育皇子",
+    "type": "status_change",
+    "character": "甄嬛",
+    "title": "熹妃（生子）"
+  },
+  {
+    "id": 30,
+    "volume": 5,
+    "chapter": 22,
+    "event": "沈眉庄诞育公主",
+    "type": "status_change",
+    "character": "沈眉庄",
+    "title": "惠嫔（生女）"
+  },
+  {
+    "id": 31,
+    "volume": 5,
+    "chapter": 23,
+    "event": "皇后陷害甄嬛",
+    "type": "relationship",
+    "characters": [
+      "皇后",
+      "甄嬛"
+    ],
+    "relationship": "敌对"
+  },
+  {
+    "id": 32,
+    "volume": 5,
+    "chapter": 24,
+    "event": "沈眉庄病逝",
+    "type": "status_change",
+    "character": "沈眉庄",
+    "title": "惠嫔（薨逝）"
+  },
+  {
+    "id": 33,
+    "volume": 5,
+    "chapter": 25,
+    "event": "甄嬛晋封熹贵妃",
+    "type": "status_change",
+    "character": "甄嬛",
+    "title": "熹贵妃（正一品）"
+  },
+  {
+    "id": 34,
+    "volume": 6,
+    "chapter": 26,
+    "event": "果郡王被赐死",
+    "type": "status_change",
+    "character": "果郡王",
+    "title": "果郡王（身亡）"
+  },
+  {
+    "id": 35,
+    "volume": 6,
+    "chapter": 27,
+    "event": "皇后被废",
+    "type": "status_change",
+    "character": "皇后",
+    "title": "废后"
+  },
+  {
+    "id": 36,
+    "volume": 6,
+    "chapter": 28,
+    "event": "安陵容自杀",
+    "type": "status_change",
+    "character": "安陵容",
+    "title": "鹂妃（身亡）"
+  },
+  {
+    "id": 37,
+    "volume": 6,
+    "chapter": 29,
+    "event": "甄嬛掌管后宫",
+    "type": "status_change",
+    "character": "甄嬛",
+    "title": "熹贵妃（掌后宫）"
+  },
+  {
+    "id": 38,
+    "volume": 7,
+    "chapter": 30,
+    "event": "皇帝驾崩",
+    "type": "status_change",
+    "character": "玄凌",
+    "title": "皇帝（驾崩）"
+  },
+  {
+    "id": 39,
+    "volume": 7,
+    "chapter": 31,
+    "event": "甄嬛成为皇太后",
+    "type": "status_change",
+    "character": "甄嬛",
+    "title": "皇太后"
+  },
+  {
+    "id": 40,
+    "volume": 1,
+    "chapter": 4,
+    "event": "甄嬛与温实初旧情",
+    "type": "relationship",
+    "characters": [
+      "甄嬛",
+      "温实初"
+    ],
+    "relationship": "旧情"
+  },
+  {
+    "id": 41,
+    "volume": 2,
+    "chapter": 8,
+    "event": "安陵容学唱歌邀宠",
+    "type": "status_change",
+    "character": "安陵容",
+    "title": "鹂妃（善歌）"
+  },
+  {
+    "id": 42,
+    "volume": 2,
+    "chapter": 9,
+    "event": "皇后暗中陷害",
+    "type": "relationship",
+    "characters": [
+      "皇后",
+      "甄嬛"
+    ],
+    "relationship": "暗斗"
+  },
+  {
+    "id": 43,
+    "volume": 3,
+    "chapter": 12,
+    "event": "槿汐忠心护主",
+    "type": "relationship",
+    "characters": [
+      "槿汐",
+      "甄嬛"
+    ],
+    "relationship": "主仆情深"
+  },
+  {
+    "id": 44,
+    "volume": 4,
+    "chapter": 18,
+    "event": "甄嬛与皇后正面交锋",
+    "type": "relationship",
+    "characters": [
+      "甄嬛",
+      "皇后"
+    ],
+    "relationship": "对抗"
+  },
+  {
+    "id": 45,
+    "volume": 5,
+    "chapter": 22,
+    "event": "甄嬛揭露皇后罪行",
+    "type": "relationship",
+    "characters": [
+      "甄嬛",
+      "皇后"
+    ],
+    "relationship": "揭露"
+  },
+  {
+    "id": 46,
+    "volume": 6,
+    "chapter": 27,
+    "event": "皇后打入冷宫",
+    "type": "status_change",
+    "character": "皇后",
+    "title": "废后（冷宫）"
+  }
+]

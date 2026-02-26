@@ -10,7 +10,7 @@
 import rawEvents from './zhenhuan_complete_events.json'
 
 // ---------- Name alias: events JSON name → graphData Label ----------
-const NAME_ALIAS = {
+export const NAME_ALIAS = {
   '玄凌': '雍正',
   '皇后': '宜修',
   '华妃': '年世兰',

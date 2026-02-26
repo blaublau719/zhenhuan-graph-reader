@@ -100,6 +100,19 @@ export default function ChapterReader({
       setCurrentPage(location.start.displayed.page)
       setTotalPages(location.start.displayed.total)
 
+      // Extract text from current view for character detection on every page turn
+      try {
+        const contents = newRendition.getContents()
+        if (contents && contents.length > 0) {
+          const text = contents.map(c => c.document.body.textContent || '').join(' ')
+          if (text.trim()) {
+            onTextUpdate(text)
+          }
+        }
+      } catch (e) {
+        // Silently ignore extraction errors
+      }
+
       // Use locations-based percentage if available, fallback to atEnd for basic progress
       if (locationsReadyRef.current && location.start.cfi) {
         const pct = newBook.locations.percentageFromCfi(location.start.cfi)

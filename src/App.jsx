@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import ChapterReader from './components/ChapterReader'
 import GraphVisualization from './components/GraphVisualization'
 import { graphData } from './data/graphData'
-import { computeGraphState, tocIndexToEventChapter } from './data/chapterEvents'
+import { computeGraphState, tocIndexToEventChapter, NAME_ALIAS } from './data/chapterEvents'
+
+// Build alias lookup: novel-text name → graphData Label
+const NOVEL_NAME_TO_LABEL = { ...NAME_ALIAS }
 
 const STORAGE_KEY_CHARS = 'zhenhuan-read-characters'
 const STORAGE_KEY_CHAPTER = 'zhenhuan-current-chapter'
@@ -210,9 +213,16 @@ function App() {
 
   const handleTextUpdate = useCallback((text) => {
     const chars = new Set()
+    // Match by node Label directly
     graphData.nodes.forEach(node => {
       if (text.includes(node.Label)) {
         chars.add(node.Label)
+      }
+    })
+    // Also match by novel aliases (e.g. 玄凌→雍正, 华妃→年世兰)
+    Object.entries(NOVEL_NAME_TO_LABEL).forEach(([novelName, label]) => {
+      if (text.includes(novelName)) {
+        chars.add(label)
       }
     })
     setDetectedCharacters(Array.from(chars))
