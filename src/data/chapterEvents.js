@@ -97,6 +97,8 @@ export const NAME_ALIAS = {
   '实初': '温实初',
   // 苏培盛
   '培盛': '苏培盛',
+  // 李长
+  '李公公': '李长',
 }
 
 function resolveLabel(name) {
