@@ -89,6 +89,7 @@ export const graphData = {
     { "source": 1, "target": 49, "Relationship": "兄弟" },
     { "source": 7, "target": 49, "Relationship": "秘密恋人" },
     { "source": 1, "target": 50, "Relationship": "母亲" },
+    { "source": 2, "target": 4, "Relationship": "同盟" },
     { "source": 2, "target": 50, "Relationship": "同盟" }
   ]
 };
