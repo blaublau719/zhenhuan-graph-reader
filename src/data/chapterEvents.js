@@ -99,6 +99,9 @@ export const NAME_ALIAS = {
   '培盛': '苏培盛',
   // 李长
   '李公公': '李长',
+  // 玄清
+  '清河王': '玄清',
+  '老六': '玄清',
 }
 
 function resolveLabel(name) {

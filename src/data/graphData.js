@@ -47,7 +47,8 @@ export const graphData = {
     { "Label": "流朱", "ID": 45, "Alliance": "甄嬛阵营", "Title": "甄嬛贴身侍女", "initialTitle": "甄嬛贴身侍女", "appearChapter": 1 },
     { "Label": "黄规全", "ID": 46, "Alliance": "甄嬛阵营", "Title": "碎玉轩太监", "initialTitle": "碎玉轩太监", "appearChapter": 1 },
     { "Label": "采月", "ID": 47, "Alliance": "甄嬛阵营", "Title": "沈眉庄贴身侍女", "initialTitle": "沈眉庄贴身侍女", "appearChapter": 1 },
-    { "Label": "李长", "ID": 48, "Alliance": "皇室成员", "Title": "皇帝贴身内侍", "initialTitle": "皇帝贴身内侍", "appearChapter": 1 }
+    { "Label": "李长", "ID": 48, "Alliance": "皇室成员", "Title": "皇帝贴身内侍", "initialTitle": "皇帝贴身内侍", "appearChapter": 1 },
+    { "Label": "玄清", "ID": 49, "Alliance": "皇室成员", "Title": "清河王", "initialTitle": "清河王", "appearChapter": 2 }
   ],
   "edges": [
     { "source": 1, "target": 2, "Relationship": "妻子" },
@@ -83,7 +84,9 @@ export const graphData = {
     { "source": 15, "target": 44, "Relationship": "心腹" },
     { "source": 18, "target": 19, "Relationship": "妻子" },
     { "source": 36, "target": 39, "Relationship": "偷吃" },
-    { "source": 40, "target": 46, "Relationship": "兄弟" }
+    { "source": 40, "target": 46, "Relationship": "兄弟" },
+    { "source": 1, "target": 49, "Relationship": "兄弟" },
+    { "source": 7, "target": 49, "Relationship": "秘密恋人" }
   ]
 };
 
