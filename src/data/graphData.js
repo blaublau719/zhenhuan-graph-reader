@@ -78,6 +78,8 @@ export const graphData = {
     { "source": 7, "target": 45, "Relationship": "心腹" },
     { "source": 8, "target": 37, "Relationship": "地下情" },
     { "source": 8, "target": 47, "Relationship": "心腹" },
+    { "source": 7, "target": 10, "Relationship": "同盟" },
+    { "source": 10, "target": 15, "Relationship": "敌对" },
     { "source": 14, "target": 15, "Relationship": "表面同盟" },
     { "source": 15, "target": 16, "Relationship": "同盟" },
     { "source": 15, "target": 38, "Relationship": "心腹" },
